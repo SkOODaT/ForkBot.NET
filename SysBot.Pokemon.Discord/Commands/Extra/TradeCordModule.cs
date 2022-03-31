@@ -85,6 +85,12 @@ namespace SysBot.Pokemon.Discord
 
             var t = Task.Run(async () => await Util.EventVoteCalc(Context, events).ConfigureAwait(false));
             var index = t.Result;
+
+            Hub.Config.TradeCord.PokeEventType = events[index];
+            Hub.Config.TradeCord.EnableEvent = true;
+            Hub.Config.TradeCord.EventEnd = DateTime.Now.AddMinutes(Hub.Config.TradeCord.TradeCordEventDuration).ToString();
+            await ReplyAsync($"{events[index]} event has begun and will last {(Hub.Config.TradeCord.TradeCordEventDuration < 2 ? "1 minute" : $"{Hub.Config.TradeCord.TradeCordEventDuration} minutes")}!");
+
             if (result.UsersToPing != null && result.UsersToPing.Length > 0)
             {
                 var users = Context.Guild.Users.ToArray();
@@ -113,11 +119,6 @@ namespace SysBot.Pokemon.Discord
                     }
                 }
             }
-
-            Hub.Config.TradeCord.PokeEventType = events[index];
-            Hub.Config.TradeCord.EnableEvent = true;
-            Hub.Config.TradeCord.EventEnd = DateTime.Now.AddMinutes(Hub.Config.TradeCord.TradeCordEventDuration).ToString();
-            await ReplyAsync($"{events[index]} event has begun and will last {(Hub.Config.TradeCord.TradeCordEventDuration < 2 ? "1 minute" : $"{Hub.Config.TradeCord.TradeCordEventDuration} minutes")}!");
         }
 
         [Command("TradeCordCatch")]

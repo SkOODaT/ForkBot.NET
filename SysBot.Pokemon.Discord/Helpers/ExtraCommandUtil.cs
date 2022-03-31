@@ -225,23 +225,21 @@ namespace SysBot.Pokemon.Discord
 
             await Task.Delay(30_000).ConfigureAwait(false);
             await msg.UpdateAsync().ConfigureAwait(false);
-            List<int> reactList = new();
-            for (int i = 0; i < 5; i++)
-                reactList.Add(msg.Reactions.Values.ToArray()[i].ReactionCount);
 
-            var topVote = reactList.Max();
-            bool tieBreak = reactList.FindAll(x => x == topVote).Count > 1;
+            var reactArr = msg.Reactions.Where(x => reactions.Contains(x.Key)).Select(x => x.Value.ReactionCount).ToList();
+            var topVote = reactArr.Max();
+            bool tieBreak = reactArr.FindAll(x => x == topVote).Count > 1;
             if (tieBreak)
             {
                 List<int> indexes = new();
-                for (int i = 0; i < reactList.Count; i++)
+                for (int i = 0; i < reactArr.Count; i++)
                 {
-                    if (reactList[i] == topVote)
+                    if (reactArr[i] == topVote)
                         indexes.Add(i);
                 }
                 return indexes[new Random().Next(indexes.Count)];
             }
-            return reactList.IndexOf(topVote);
+            return reactArr.IndexOf(topVote);
         }
 
         public async Task EmbedUtil(SocketCommandContext ctx, string name, string value, EmbedBuilder? embed = null)

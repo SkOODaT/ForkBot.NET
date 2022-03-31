@@ -12,11 +12,8 @@ namespace SysBot.Pokemon
     public class TradeExtensions<T> where T : PKM, new()
     {
         private static readonly object _syncLog = new();
-        public static bool CoordinatesSet = false;
         public static ulong CoordinatesOffset = 0;
-        public static byte[] XCoords = { 0 };
-        public static byte[] YCoords = { 0 };
-        public static byte[] ZCoords = { 0 };
+        public static Dictionary<string, (byte[], byte[], byte[])> Coordinates = new();
         public static readonly string[] Characteristics =
         {
             "Takes plenty of siestas",
