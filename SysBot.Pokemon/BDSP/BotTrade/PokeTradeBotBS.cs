@@ -434,56 +434,92 @@ namespace SysBot.Pokemon
             await Click(Y, 1_000 + Hub.Config.Timings.ExtraTimeOpenYMenu, token).ConfigureAwait(false);
             await Click(DRIGHT, 0_400, token).ConfigureAwait(false);
 
-            // French has one less menu
-            if (GameLang is not LanguageID.French)
-            {
-                await Click(A, 0_050, token).ConfigureAwait(false);
-                await PressAndHold(A, 1_000, 0, token).ConfigureAwait(false);
-            }
 
-            await Click(A, 0_050, token).ConfigureAwait(false);
-            await PressAndHold(A, 1_500, 0, token).ConfigureAwait(false);
+            // SKOODAT LAN MODS
+            //await Click(DRIGHT, 0_400, token).ConfigureAwait(false);
 
-            // Japanese has one extra menu
-            if (GameLang is LanguageID.Japanese)
-            {
-                await Click(A, 0_050, token).ConfigureAwait(false);
-                await PressAndHold(A, 1_000, 0, token).ConfigureAwait(false);
-            }
-
-            await Click(A, 1_000, token).ConfigureAwait(false); // Would you like to enter? Screen
+            Log("Selecting A for initial chat.");
+            await Click(A, 0_1500, token).ConfigureAwait(false);
+            Log("Selecting A for chat 1.");
+            await Click(A, 0_1500, token).ConfigureAwait(false);
+            Log("Selecting A for chat 2.");
+            await Click(A, 0_1500, token).ConfigureAwait(false);
+            Log("Selecting A for chat 3.");
+            await Click(A, 0_1500, token).ConfigureAwait(false);
 
             Log("Selecting Link Code room.");
-            // Link code selection index
             await Click(DDOWN, 0_200, token).ConfigureAwait(false);
             await Click(DDOWN, 0_200, token).ConfigureAwait(false);
 
-            Log("Connecting to internet.");
-            await Click(A, 0_050, token).ConfigureAwait(false);
-            await PressAndHold(A, 2_000, 0, token).ConfigureAwait(false);
-
-            // Extra menus.
-            if (GameLang is LanguageID.German or LanguageID.Italian or LanguageID.Korean)
-            {
-                await Click(A, 0_050, token).ConfigureAwait(false);
-                await PressAndHold(A, 0_750, 0, token).ConfigureAwait(false);
-            }
-
-            await Click(A, 0_050, token).ConfigureAwait(false);
-            await PressAndHold(A, 1_000, 0, token).ConfigureAwait(false);
-            await Click(A, 0_050, token).ConfigureAwait(false);
-            await PressAndHold(A, 1_500, 0, token).ConfigureAwait(false);
-            await Click(A, 0_050, token).ConfigureAwait(false);
-            await PressAndHold(A, 1_500, 0, token).ConfigureAwait(false);
-
-            // Would you like to save your adventure so far?
-            await Click(A, 0_500, token).ConfigureAwait(false);
-            await Click(A, 0_500, token).ConfigureAwait(false);
+            Log("Selecting A for chat 4.");
+            await Click(A, 0_1500, token).ConfigureAwait(false);
+            Log("Selecting A for chat 5.");
+            await Click(A, 0_1500, token).ConfigureAwait(false);
+            Log("Selecting A for chat 6.");
+            await Click(A, 0_1500, token).ConfigureAwait(false);
+            Log("Selecting A for chat 7.");
+            await Click(A, 0_1500, token).ConfigureAwait(false);
 
             Log("Saving the game.");
             // Agree and save the game.
-            await Click(A, 0_050, token).ConfigureAwait(false);
-            await PressAndHold(A, 6_500, 0, token).ConfigureAwait(false);
+            await Click(A, 0_1500, token).ConfigureAwait(false);
+            await Click(A, 0_1500, token).ConfigureAwait(false);
+
+            // Delay For Link Menu
+            await Task.Delay(0_2000, token).ConfigureAwait(false);
+            // SKOODAT LAN MODS
+
+
+            // French has one less menu
+            //if (GameLang is not LanguageID.French)
+            //{
+            //    await Click(A, 0_050, token).ConfigureAwait(false);
+            //    await PressAndHold(A, 1_000, 0, token).ConfigureAwait(false);
+            //}
+
+            //await Click(A, 0_050, token).ConfigureAwait(false);
+            //await PressAndHold(A, 1_500, 0, token).ConfigureAwait(false);
+
+            // Japanese has one extra menu
+            //if (GameLang is LanguageID.Japanese)
+            //{
+            //    await Click(A, 0_050, token).ConfigureAwait(false);
+            //    await PressAndHold(A, 1_000, 0, token).ConfigureAwait(false);
+            //}
+
+            //await Click(A, 1_000, token).ConfigureAwait(false); // Would you like to enter? Screen
+
+            //Log("Selecting Link Code room.");
+            // Link code selection index
+            //await Click(DDOWN, 0_200, token).ConfigureAwait(false);
+            //await Click(DDOWN, 0_200, token).ConfigureAwait(false);
+
+            //Log("Connecting to internet.");
+            //await Click(A, 0_050, token).ConfigureAwait(false);
+            //await PressAndHold(A, 2_000, 0, token).ConfigureAwait(false);
+
+            // Extra menus.
+            //if (GameLang is LanguageID.German or LanguageID.Italian or LanguageID.Korean)
+            //{
+            //    await Click(A, 0_050, token).ConfigureAwait(false);
+            //    await PressAndHold(A, 0_750, 0, token).ConfigureAwait(false);
+            //}
+
+            //await Click(A, 0_050, token).ConfigureAwait(false);
+            //await PressAndHold(A, 1_000, 0, token).ConfigureAwait(false);
+            //await Click(A, 0_050, token).ConfigureAwait(false);
+            //await PressAndHold(A, 1_500, 0, token).ConfigureAwait(false);
+            //await Click(A, 0_050, token).ConfigureAwait(false);
+            //await PressAndHold(A, 1_500, 0, token).ConfigureAwait(false);
+
+            // Would you like to save your adventure so far?
+            //await Click(A, 0_500, token).ConfigureAwait(false);
+            //await Click(A, 0_500, token).ConfigureAwait(false);
+
+            //Log("Saving the game.");
+            // Agree and save the game.
+            //await Click(A, 0_050, token).ConfigureAwait(false);
+            //await PressAndHold(A, 6_500, 0, token).ConfigureAwait(false);
 
             if (tradeType != PokeTradeType.Random)
                 Hub.Config.Stream.StartEnterCode(this);
@@ -507,6 +543,14 @@ namespace SysBot.Pokemon
             }
 
             await Task.Delay(1_300 + Hub.Config.Timings.ExtraTimeJoinUnionRoom, token).ConfigureAwait(false);
+
+
+            // SKOODAT LAN MODS
+            Log("Positioning character.");
+            await PressAndHold(DUP, 0_1400, 0, token).ConfigureAwait(false);
+            await PressAndHold(DDOWN, 0_400, 0, token).ConfigureAwait(false);
+            // SKOODAT LAN MODS
+
 
             // Y-button trades always put us in a place where we can open the call menu without having to move.
             Log("Attempting to open the Y menu.");
