@@ -224,6 +224,13 @@ namespace SysBot.Pokemon
             UpdateBarrier(poke.IsSynchronized);
             poke.TradeInitialize(this);
             await EnsureConnectedToYComm(Hub.Config, token).ConfigureAwait(false);
+
+
+            // SKOODAT LAN MODS
+            //await EnsureConnectedToYComm(Hub.Config, token).ConfigureAwait(false);
+            // SKOODAT LAN MODS
+
+
             Hub.Config.Stream.EndEnterCode(this);
 
             if (await CheckIfSoftBanned(token).ConfigureAwait(false))
