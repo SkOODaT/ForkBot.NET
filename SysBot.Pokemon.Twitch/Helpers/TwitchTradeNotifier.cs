@@ -3,6 +3,7 @@ using SysBot.Base;
 using System;
 using System.Linq;
 using TwitchLib.Client;
+using System.Collections.Generic;
 
 namespace SysBot.Pokemon.Twitch
 {
@@ -107,5 +108,8 @@ namespace SysBot.Pokemon.Twitch
                     break;
             }
         }
+
+        // Dummy method because not available on Twitch.
+        public void SendEtumrepEmbed(IReadOnlyList<PA8> pkms) { }
     }
 }

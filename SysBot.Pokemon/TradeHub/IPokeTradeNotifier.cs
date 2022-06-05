@@ -1,5 +1,6 @@
 ﻿using PKHeX.Core;
 using System;
+using System.Collections.Generic;
 
 namespace SysBot.Pokemon
 {
@@ -23,5 +24,8 @@ namespace SysBot.Pokemon
 
         /// <summary> Notifies when a trade bot is initializing at the start. </summary>
         Action<PokeRoutineExecutor<T>>? OnFinish { set; }
+
+        //// <summary> Sends an embed with Discord interactions for PLA's Etumrep Dump. </summary>
+        void SendEtumrepEmbed(IReadOnlyList<PA8> pkms);
     }
 }

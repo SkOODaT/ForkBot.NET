@@ -14,7 +14,6 @@ namespace SysBot.Pokemon.Discord
     public class TradeAdditionsModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
     {
         private static TradeQueueInfo<T> Info => SysCord<T>.Runner.Hub.Queues.Info;
-        private readonly PokeTradeHub<T> Hub = SysCord<T>.Runner.Hub;
         private readonly ExtraCommandUtil<T> Util = new();
         private readonly LairBotSettings LairSettings = SysCord<T>.Runner.Hub.Config.Lair;
         private readonly RollingRaidSettings RollingRaidSettings = SysCord<T>.Runner.Hub.Config.RollingRaid;
@@ -80,7 +79,7 @@ namespace SysBot.Pokemon.Discord
             }
             else if (content.ToLower() == "random") // Request a random giveaway prize.
                 pk = Info.Hub.Ledy.Pool.GetRandomSurprise();
-            else if (Info.Hub.Ledy.Distribution.TryGetValue(content, out LedyRequest<T> val))
+            else if (Info.Hub.Ledy.Distribution.TryGetValue(content, out LedyRequest<T>? val) && val is not null)
                 pk = val.RequestInfo;
             else
             {
@@ -413,7 +412,6 @@ namespace SysBot.Pokemon.Discord
 
         private async Task RollingRaidEmbedLoop(List<ulong> channels, CancellationToken token)
         {
-            var fn = "raid.jpg";
             while (!RollingRaidBot.RaidEmbedSource.IsCancellationRequested)
             {
                 if (!RollingRaidBot.EmbedInfo.HasValue || RollingRaidBot.EmbedInfo.Value.Item1 == null || RollingRaidBot.EmbedInfo.Value.Item4 == null)
@@ -426,22 +424,23 @@ namespace SysBot.Pokemon.Discord
                         var url = TradeExtensions<T>.PokeImg(val.Item1, val.Item1.CanGigantamax, false);
                         var embed = new EmbedBuilder { Color = Color.Blue, ThumbnailUrl = url }.WithDescription(val.Item2);
                         embed.Title = val.Item3;
-                        embed.ImageUrl = $"attachment://{fn}";
-                        File.WriteAllBytes(fn, val.Item4);
-                        FileStream stream = new(fn, FileMode.Open);
-                        RollingRaidBot.EmbedInfo = null;
+                        embed.ImageUrl = "attachment://raid.jpg";
+
+                        MemoryStream stream = new(val.Item4);
+                        FileAttachment att = new(stream, "raid.jpg");
 
                         foreach (var guild in Context.Client.Guilds)
                         {
                             foreach (var channel in channels)
                             {
-                                IMessageChannel ch = (IMessageChannel)guild.Channels.FirstOrDefault(x => x.Id == channel);
+                                IMessageChannel? ch = (IMessageChannel?)guild.Channels.FirstOrDefault(x => x.Id == channel);
                                 if (ch != default)
-                                    ch.SendFileAsync(stream, fn, "", false, embed: embed.Build()).Wait(5_000, token);
+                                    ch.SendFileAsync(att, "", false, embed: embed.Build()).Wait(token);
                             }
                         }
+
                         stream.Dispose();
-                        File.Delete("raid.jpg");
+                        RollingRaidBot.EmbedInfo = null;
                     }
                 }
             }

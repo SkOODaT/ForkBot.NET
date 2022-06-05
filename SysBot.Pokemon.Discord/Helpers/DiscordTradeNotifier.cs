@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using PKHeX.Core;
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace SysBot.Pokemon.Discord
 {
@@ -97,5 +98,7 @@ namespace SysBot.Pokemon.Discord
             var msg = $"Here are the details for `{r.Seed:X16}`:";
             Trader.SendMessageAsync(msg, embed: embed.Build()).ConfigureAwait(false);
         }
+
+        public void SendEtumrepEmbed(IReadOnlyList<PA8> pkms) => EtumrepUtil.SendEtumrepEmbedAsync(Trader, pkms).ConfigureAwait(false);
     }
 }
