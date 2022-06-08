@@ -75,6 +75,9 @@ namespace SysBot.Pokemon.Discord
                 return;
             }
 
+            msg = $"Permutation complete! Sending {name} their results!";
+            LogUtil.LogInfo(msg, "[PermuteMMO]");
+
             var embed = new EmbedBuilder
             {
                 Color = Color.Gold,

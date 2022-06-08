@@ -59,6 +59,27 @@ namespace SysBot.Pokemon.Discord
             public string SeedCheckerID { get; set; } = string.Empty;
         }
 
+        public static async Task SendIncompleteEtumrepEmbedAsync(SocketUser user, IReadOnlyList<PA8> pkms, string msg)
+        {
+            var list = new List<FileAttachment>();
+            for (int i = 0; i < pkms.Count; i++)
+            {
+                var pk = pkms[i];
+                var ms = new MemoryStream(pk.Data);
+                var name = Util.CleanFileName(pk.FileName);
+                list.Add(new(ms, name));
+            }
+
+            var embed = new EmbedBuilder
+            {
+                Color = Color.Blue,
+                Description = "Here are all the Pokémon you dumped!",
+            }.WithAuthor(x => { x.Name = "Pokémon Legends: Arceus Dump"; });
+
+            var dmCh = await user.CreateDMChannelAsync().ConfigureAwait(false);
+            await dmCh.SendFilesAsync(list, msg, false, embed: embed.Build()).ConfigureAwait(false);
+        }
+
         public static async Task SendEtumrepEmbedAsync(SocketUser user, IReadOnlyList<PA8> pkms)
         {
             var list = new List<FileAttachment>();

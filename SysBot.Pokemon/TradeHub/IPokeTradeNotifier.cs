@@ -27,5 +27,8 @@ namespace SysBot.Pokemon
 
         //// <summary> Sends an embed with Discord interactions for PLA's Etumrep Dump. </summary>
         void SendEtumrepEmbed(IReadOnlyList<PA8> pkms);
+
+        //// <summary> Sends an embed with Discord interactions for PLA's Etumrep Dump when criteria was not met. </summary>
+        void SendIncompleteEtumrepEmbed(IReadOnlyList<PA8> pkms, string msg);
     }
 }

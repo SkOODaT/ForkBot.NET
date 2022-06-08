@@ -52,5 +52,6 @@ namespace SysBot.Pokemon
         public Action<PokeRoutineExecutor<T>>? OnFinish { get; set; }
 
         public void SendEtumrepEmbed(IReadOnlyList<PA8> pkms) { }
+        public void SendIncompleteEtumrepEmbed(IReadOnlyList<PA8> pkms, string msg) { }
     }
 }

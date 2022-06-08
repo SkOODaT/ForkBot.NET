@@ -100,5 +100,6 @@ namespace SysBot.Pokemon.Discord
         }
 
         public void SendEtumrepEmbed(IReadOnlyList<PA8> pkms) => EtumrepUtil.SendEtumrepEmbedAsync(Trader, pkms).ConfigureAwait(false);
+        public void SendIncompleteEtumrepEmbed(IReadOnlyList<PA8> pkms, string msg) => EtumrepUtil.SendIncompleteEtumrepEmbedAsync(Trader, pkms, msg).ConfigureAwait(false);
     }
 }

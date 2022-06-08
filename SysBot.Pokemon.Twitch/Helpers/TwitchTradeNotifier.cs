@@ -109,7 +109,8 @@ namespace SysBot.Pokemon.Twitch
             }
         }
 
-        // Dummy method because not available on Twitch.
+        // Dummy methods because not available on Twitch.
         public void SendEtumrepEmbed(IReadOnlyList<PA8> pkms) { }
+        public void SendIncompleteEtumrepEmbed(IReadOnlyList<PA8> pkms, string msg) { }
     }
 }
