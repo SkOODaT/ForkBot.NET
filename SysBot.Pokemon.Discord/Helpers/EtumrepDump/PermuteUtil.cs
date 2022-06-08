@@ -20,7 +20,7 @@ namespace SysBot.Pokemon.Discord
                 LogUtil.LogInfo(msg, "[PermuteMMO Request]");
 
                 var emb = component.Message.Embeds.First();
-                await UpdatePermuteEmbed(component.Message, emb.Description, Color.Gold).ConfigureAwait(false);
+                await UpdatePermuteEmbed(component.Message, emb.Description, Color.Gold, null, MessageFlags.None, emb.Author?.Name).ConfigureAwait(false);
 
                 var seed = id.Split(';')[1];
                 var buttonReady = new ButtonBuilder() { CustomId = $"permute_ready;{seed}", Label = "Ready", Style = ButtonStyle.Success };
@@ -63,6 +63,8 @@ namespace SysBot.Pokemon.Discord
                 return;
             }
 
+            // Split into another interaction for customizable filters?
+            PermuteMeta.SatisfyCriteria = (result, advances) => result.IsShiny;
             var spawner = info.GetSpawn();
             var meta = Permuter.Permute(spawner, seed);            
             if (!meta.HasResults)
@@ -85,13 +87,13 @@ namespace SysBot.Pokemon.Discord
             await modal.FollowupWithFileAsync(ms, $"PermuteMMO_{seed}.txt", null, null, false, false, null, null, embed: embed.Build()).ConfigureAwait(false);
         }
 
-        private static async Task UpdatePermuteEmbed(SocketUserMessage message, string desc, Color color, MessageComponent? components = null, MessageFlags flag = MessageFlags.None)
+        private static async Task UpdatePermuteEmbed(SocketUserMessage message, string desc, Color color, MessageComponent? components = null, MessageFlags flag = MessageFlags.None, string? authorName = null)
         {
             var embed = new EmbedBuilder
             {
                 Color = color,
                 Description = desc,
-            }.WithAuthor(x => { x.Name = "PermuteMMO Service"; });
+            }.WithAuthor(x => { x.Name = authorName ?? "PermuteMMO Service"; });
 
             await message.ModifyAsync(x =>
             {

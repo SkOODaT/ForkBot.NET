@@ -80,7 +80,7 @@ namespace SysBot.Pokemon.Discord
                 var components = new ComponentBuilder().WithButton(buttonYes).WithButton(buttonNo);
 
                 embed.Description = "Here are all the Pokémon you dumped! Would you now like to run EtumrepMMO?";
-                embed.WithAuthor(x => { x.Name = "Etumrep Service"; });
+                embed.WithAuthor(x => { x.Name = "EtumrepMMO Service"; });
 
                 await dmCh.SendFilesAsync(list, null, false, embed: embed.Build(), null, null, null, components: components.Build()).ConfigureAwait(false);
                 return;
@@ -283,7 +283,7 @@ namespace SysBot.Pokemon.Discord
 
                     if (seed == 0)
                     {
-                        msg = "Failed to calculate seed. Please make sure shown Pokémon are the first four spawns, and have come from an MMO.";
+                        msg = "Failed to calculate seed. Please make sure shown Pokémon are the first four spawns, and have come from an MO or MMO.";
                         await UpdateEtumrepEmbed(user.Component.Message, msg, Color.Gold).ConfigureAwait(false);
                     }
                     else
@@ -311,7 +311,7 @@ namespace SysBot.Pokemon.Discord
             {
                 Color = color,
                 Description = desc,
-            }.WithAuthor(x => { x.Name = "Etumrep Service"; });
+            }.WithAuthor(x => { x.Name = "EtumrepMMO Service"; });
 
             await message.ModifyAsync(x =>
             {

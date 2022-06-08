@@ -7,6 +7,7 @@ using System.Linq;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 using static SysBot.Base.SwitchButton;
 using static SysBot.Pokemon.PokeDataOffsets;
 
@@ -27,15 +28,13 @@ namespace SysBot.Pokemon
 
         public static CancellationTokenSource RaidEmbedSource = new();
         public static bool RollingRaidEmbedsInitialized;
-        public static (PK8?, string, string, byte[])? EmbedInfo;
+        public static ConcurrentQueue<(PK8, string, string, byte[])> EmbedQueue = new();
 
         private int encounterCount;
         private bool deleteFriends;
         private bool addFriends;
         private readonly bool[] PlayerReady = new bool[4];
         private string raidBossString = string.Empty;
-        private string IVString = string.Empty;
-        private string embedString = string.Empty;
         private bool airplaneUsable = false;
         private bool softLock = false;
         private bool hardLock = false;
@@ -44,8 +43,17 @@ namespace SysBot.Pokemon
         private int RaidLogCount;
         private uint denOfs = 0;
         private ulong playerNameOfs = 0;
-        private PK8? raidPk;
         private LobbyPlayerInfo[] LobbyPlayers = new LobbyPlayerInfo[4];
+        private PK8 raidPk = new();
+        private string ivString = string.Empty;
+
+        private class EmbedInfo
+        {
+            public PK8 RaidPk { get; set; } = new();
+            public string EmbedName { get; set; } = string.Empty;
+            public string EmbedString { get; set; } = string.Empty;
+            public byte[] Image { get; set; } = Array.Empty<byte>();
+        }
 
         private class LobbyPlayerInfo
         {
@@ -183,6 +191,11 @@ namespace SysBot.Pokemon
         private async Task<bool> HostRaidAsync(int code, CancellationToken token)
         {
             bool unexpectedBattle = await CheckDen(token).ConfigureAwait(false);
+            var info = new EmbedInfo()
+            {
+                EmbedString = ivString,
+                RaidPk = raidPk,
+            };
 
             // Connect to Y-Comm
             await EnsureConnectedToYComm(Hub.Config, token).ConfigureAwait(false);
@@ -218,7 +231,7 @@ namespace SysBot.Pokemon
             var friendAdd = $"Send a friend request to Friend Code **{Settings.FriendCode}** to join in! Friends will be added after this raid.";
             if (addFriends && !string.IsNullOrEmpty(Settings.FriendCode))
             {
-                embedString += $"\n\n{friendAdd}";
+                info.EmbedString += $"\n\n{friendAdd}";
                 if (!RollingRaidEmbedsInitialized)
                     EchoUtil.Echo(friendAdd);
             }
@@ -226,13 +239,13 @@ namespace SysBot.Pokemon
             var linkcodemsg = code < 0 ? "no Link Code" : $"code **{code:0000 0000}**";
             string raiddescmsg = string.IsNullOrEmpty(Settings.RaidDescription) ? raidBossString : "\"" + Settings.RaidDescription + "\"";
             var raidMsg = $"Raid lobby for {raiddescmsg} is open with {linkcodemsg}.";
-            embedString += $"\n\n{raidMsg}";
+            info.EmbedString += $"\n\n{raidMsg}";
 
             if (RollingRaidEmbedsInitialized)
             {
-                var arr = Connection.Screengrab(token).Result.ToArray();
-                EmbedInfo = new(raidPk, IVString + embedString, $"{(string.IsNullOrEmpty(Settings.RaidDescription) ? $"{RaidInfo.TrainerInfo.OT}'s Raid" : raiddescmsg)}", arr);
-                await Task.Delay(0_100, token).ConfigureAwait(false);
+                info.Image = await Connection.Screengrab(token).ConfigureAwait(false);
+                info.EmbedName = string.IsNullOrEmpty(Settings.RaidDescription) ? $"{RaidInfo.TrainerInfo.OT}'s Raid" : raiddescmsg;
+                EmbedQueue.Enqueue((info.RaidPk, info.EmbedString, info.EmbedName, info.Image));
             }
 
             // Invite others and wait
@@ -254,7 +267,6 @@ namespace SysBot.Pokemon
             if (ready && Config.Connection.Protocol == SwitchProtocol.USB && Settings.AirplaneQuitout) // Need at least one player to be ready
                 airplaneUsable = true;
 
-            embedString = string.Empty;
             LobbyPlayers = new LobbyPlayerInfo[4];
             for (int i = 0; i < 4; i++)
                 PlayerReady[i] = false;
@@ -765,7 +777,7 @@ namespace SysBot.Pokemon
 
             var flawless = (uint)(isEvent ? RaidInfo.RaidDistributionEncounter.FlawlessIVs : RaidInfo.RaidEncounter.FlawlessIVs);
             bool flawlessLock = Settings.GuaranteedIVLock <= 0 || Settings.GuaranteedIVLock == flawless;
-            IVString = SeedSearchUtil.GetCurrentFrameInfo(RaidInfo, flawless, RaidInfo.Den.Seed, out uint shinyType);
+            ivString = SeedSearchUtil.GetCurrentFrameInfo(RaidInfo, flawless, RaidInfo.Den.Seed, out uint shinyType);
 
             var shiny = shinyType == 1 ? "\nShiny: Star" : shinyType == 2 ? "\nShiny: Square" : "";
             raidPk = (PK8)AutoLegalityWrapper.GetTrainerInfo<PK8>().GetLegal(AutoLegalityWrapper.GetTemplate(new ShowdownSet($"{speciesStr}{formStr}{(gmax ? "-Gmax" : "")}{shiny}")), out _);

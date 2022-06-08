@@ -17,7 +17,6 @@ namespace SysBot.Pokemon.Discord
         private readonly ExtraCommandUtil<T> Util = new();
         private readonly LairBotSettings LairSettings = SysCord<T>.Runner.Hub.Config.Lair;
         private readonly RollingRaidSettings RollingRaidSettings = SysCord<T>.Runner.Hub.Config.RollingRaid;
-        private readonly object _lock = new();
 
         [Command("giveawayqueue")]
         [Alias("gaq")]
@@ -414,35 +413,30 @@ namespace SysBot.Pokemon.Discord
         {
             while (!RollingRaidBot.RaidEmbedSource.IsCancellationRequested)
             {
-                if (!RollingRaidBot.EmbedInfo.HasValue || RollingRaidBot.EmbedInfo.Value.Item1 == null || RollingRaidBot.EmbedInfo.Value.Item4 == null)
-                    await Task.Delay(0_500, token).ConfigureAwait(false);
-                else
+                if (RollingRaidBot.EmbedQueue.TryDequeue(out var embedInfo) && embedInfo.Item4.Length > 0)
                 {
-                    lock (_lock)
+                    var url = TradeExtensions<T>.PokeImg(embedInfo.Item1, embedInfo.Item1.CanGigantamax, false);
+                    var embed = new EmbedBuilder
                     {
-                        var val = RollingRaidBot.EmbedInfo.Value;
-                        var url = TradeExtensions<T>.PokeImg(val.Item1, val.Item1.CanGigantamax, false);
-                        var embed = new EmbedBuilder { Color = Color.Blue, ThumbnailUrl = url }.WithDescription(val.Item2);
-                        embed.Title = val.Item3;
-                        embed.ImageUrl = "attachment://raid.jpg";
+                        Title = embedInfo.Item3,
+                        Color = Color.Blue,
+                        ThumbnailUrl = url,
+                        ImageUrl = "attachment://raid.jpg",
+                    }.WithDescription(embedInfo.Item2);
 
-                        MemoryStream stream = new(val.Item4);
-                        FileAttachment att = new(stream, "raid.jpg");
+                    MemoryStream stream = new(embedInfo.Item4);
+                    FileAttachment att = new(stream, "raid.jpg");
 
-                        foreach (var guild in Context.Client.Guilds)
-                        {
-                            foreach (var channel in channels)
-                            {
-                                IMessageChannel? ch = (IMessageChannel?)guild.Channels.FirstOrDefault(x => x.Id == channel);
-                                if (ch != default)
-                                    ch.SendFileAsync(att, "", false, embed: embed.Build()).Wait(token);
-                            }
-                        }
-
-                        stream.Dispose();
-                        RollingRaidBot.EmbedInfo = null;
+                    foreach (var guild in Context.Client.Guilds)
+                    {
+                        var channel = guild.Channels.FirstOrDefault(x => channels.Contains(x.Id));
+                        if (channel is not null && channel is IMessageChannel ch)
+                            await ch.SendFileAsync(att, "", false, embed: embed.Build()).ConfigureAwait(false);
                     }
+
+                    stream.Dispose();
                 }
+                else await Task.Delay(0_500, token).ConfigureAwait(false);
             }
             RollingRaidBot.RollingRaidEmbedsInitialized = false;
             RollingRaidBot.RaidEmbedSource = new();

@@ -869,7 +869,17 @@ namespace SysBot.Pokemon
 
             Log($"Ended Etumrep Dump loop after processing {ctr} Pokémon.");
             if (ctr < 2)
+            {
+                detail.SendNotification(this, "Not enough Pokémon were shown to run EtumrepMMO.");
                 return PokeTradeResult.TrainerTooSlow;
+            }
+
+            bool different = TradeExtensions<PA8>.SameFamily(dumps);
+            if (different)
+            {
+                detail.SendNotification(this, "Shown Pokémon are not of the same family. Please show Pokémon that were caught in an MO or MMO.");
+                return PokeTradeResult.TrainerTooSlow;
+            }
 
             TradeSettings.AddCompletedEtumrepDumps();
             detail.Notifier.SendEtumrepEmbed(dumps);
