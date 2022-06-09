@@ -870,19 +870,21 @@ namespace SysBot.Pokemon
             Log($"Ended Etumrep Dump loop after processing {ctr} Pokémon.");
             if (ctr < 2)
             {
-                detail.Notifier.SendIncompleteEtumrepEmbed(dumps, "Not enough Pokémon were shown to run EtumrepMMO.");
+                var msg = "Not enough Pokémon were shown to run EtumrepMMO.";
+                detail.Notifier.SendIncompleteEtumrepEmbed(this, detail, msg, dumps);
                 return PokeTradeResult.TrainerTooSlow;
             }
 
             bool different = TradeExtensions<PA8>.SameFamily(dumps);
             if (different)
             {
-                detail.Notifier.SendIncompleteEtumrepEmbed(dumps, "Shown Pokémon are not of the same family. Please show Pokémon that were caught in an MO or MMO.");
+                var msg = "Shown Pokémon are not of the same family. Please show Pokémon that were caught in an MO or MMO.";
+                detail.Notifier.SendIncompleteEtumrepEmbed(this, detail, msg, dumps);
                 return PokeTradeResult.TrainerTooSlow;
             }
 
             TradeSettings.AddCompletedEtumrepDumps();
-            detail.Notifier.SendEtumrepEmbed(dumps);
+            detail.Notifier.SendEtumrepEmbed(this, detail, dumps);
             return PokeTradeResult.Success;
         }
     }

@@ -42,6 +42,14 @@ namespace SysBot.Pokemon.Discord
                 var mod = new ModalBuilder() { Title = "PermuteMMO Service", CustomId = $"permute_json;{seed}" }.AddTextInput(box);
                 await component.RespondWithModalAsync(mod.Build()).ConfigureAwait(false);
             }
+            else if (id.Contains("permute_no"))
+            {
+                var msg = component.Message.Embeds.First().Description.Split('\n').First();
+                await UpdatePermuteEmbed(component.Message, msg, Color.LightOrange).ConfigureAwait(false);
+
+                var username = $"{component.User.Username}#{component.User.Discriminator} ({component.User.Id})";
+                LogUtil.LogInfo($"{username} did not wish to run PermuteMMO.", "[PermuteMMO Request]");
+            }
         }
 
         public static async Task DoPermutationsAsync(SocketModal modal)

@@ -26,9 +26,9 @@ namespace SysBot.Pokemon
         Action<PokeRoutineExecutor<T>>? OnFinish { set; }
 
         //// <summary> Sends an embed with Discord interactions for PLA's Etumrep Dump. </summary>
-        void SendEtumrepEmbed(IReadOnlyList<PA8> pkms);
+        void SendEtumrepEmbed(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, IReadOnlyList<PA8> pkms);
 
         //// <summary> Sends an embed with Discord interactions for PLA's Etumrep Dump when criteria was not met. </summary>
-        void SendIncompleteEtumrepEmbed(IReadOnlyList<PA8> pkms, string msg);
+        void SendIncompleteEtumrepEmbed(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, string msg, IReadOnlyList<PA8> pkms);
     }
 }
