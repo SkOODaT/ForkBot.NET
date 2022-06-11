@@ -413,28 +413,23 @@ namespace SysBot.Pokemon.Discord
         {
             while (!RollingRaidBot.RaidEmbedSource.IsCancellationRequested)
             {
-                if (RollingRaidBot.EmbedQueue.TryDequeue(out var embedInfo) && embedInfo.Item4.Length > 0)
+                if (RollingRaidBot.EmbedQueue.TryDequeue(out var embedInfo))
                 {
                     var url = TradeExtensions<T>.PokeImg(embedInfo.Item1, embedInfo.Item1.CanGigantamax, false);
                     var embed = new EmbedBuilder
                     {
                         Title = embedInfo.Item3,
+                        Description = embedInfo.Item2,
                         Color = Color.Blue,
                         ThumbnailUrl = url,
-                        ImageUrl = "attachment://raid.jpg",
-                    }.WithDescription(embedInfo.Item2);
-
-                    MemoryStream stream = new(embedInfo.Item4);
-                    FileAttachment att = new(stream, "raid.jpg");
+                    };
 
                     foreach (var guild in Context.Client.Guilds)
                     {
                         var channel = guild.Channels.FirstOrDefault(x => channels.Contains(x.Id));
                         if (channel is not null && channel is IMessageChannel ch)
-                            await ch.SendFileAsync(att, "", false, embed: embed.Build()).ConfigureAwait(false);
+                            await ch.SendMessageAsync(null, false, embed: embed.Build()).ConfigureAwait(false);
                     }
-
-                    stream.Dispose();
                 }
                 else await Task.Delay(0_500, token).ConfigureAwait(false);
             }

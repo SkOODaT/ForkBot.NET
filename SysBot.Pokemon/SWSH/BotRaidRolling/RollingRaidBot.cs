@@ -28,7 +28,7 @@ namespace SysBot.Pokemon
 
         public static CancellationTokenSource RaidEmbedSource = new();
         public static bool RollingRaidEmbedsInitialized;
-        public static ConcurrentQueue<(PK8, string, string, byte[])> EmbedQueue = new();
+        public static ConcurrentQueue<(PK8, string, string)> EmbedQueue = new();
 
         private int encounterCount;
         private bool deleteFriends;
@@ -42,8 +42,7 @@ namespace SysBot.Pokemon
         private int airplaneLobbyExitCount;
         private int RaidLogCount;
         private uint denOfs = 0;
-        private ulong playerNameOfs = 0;
-        private LobbyPlayerInfo[] LobbyPlayers = new LobbyPlayerInfo[4];
+        private LobbyPlayerInfo[] LobbyPlayers = new LobbyPlayerInfo[] { new(), new(), new(), new() };
         private PK8 raidPk = new();
         private string ivString = string.Empty;
 
@@ -52,12 +51,12 @@ namespace SysBot.Pokemon
             public PK8 RaidPk { get; set; } = new();
             public string EmbedName { get; set; } = string.Empty;
             public string EmbedString { get; set; } = string.Empty;
-            public byte[] Image { get; set; } = Array.Empty<byte>();
         }
 
         private class LobbyPlayerInfo
         {
             public string Name { get; set; } = string.Empty;
+            public PK8? Poke { get; set; }
             public bool Ready { get; set; }
         }
 
@@ -147,7 +146,7 @@ namespace SysBot.Pokemon
                 Log($"Raid host {encounterCount} finished.");
                 Settings.AddCompletedRaids();
 
-                if (airplaneUsable && (Settings.DaysToRoll == 0 || hardLock || softLock))
+                if (airplaneUsable && (Settings.DaysToRoll is 0 || hardLock || softLock))
                     await ResetRaidAirplaneAsync(token).ConfigureAwait(false);
                 else await ResetGameAsync(token).ConfigureAwait(false);
             }
@@ -243,9 +242,8 @@ namespace SysBot.Pokemon
 
             if (RollingRaidEmbedsInitialized)
             {
-                info.Image = await Connection.Screengrab(token).ConfigureAwait(false);
                 info.EmbedName = string.IsNullOrEmpty(Settings.RaidDescription) ? $"{RaidInfo.TrainerInfo.OT}'s Raid" : raiddescmsg;
-                EmbedQueue.Enqueue((info.RaidPk, info.EmbedString, info.EmbedName, info.Image));
+                EmbedQueue.Enqueue((info.RaidPk, info.EmbedString, info.EmbedName));
             }
 
             // Invite others and wait
@@ -267,7 +265,7 @@ namespace SysBot.Pokemon
             if (ready && Config.Connection.Protocol == SwitchProtocol.USB && Settings.AirplaneQuitout) // Need at least one player to be ready
                 airplaneUsable = true;
 
-            LobbyPlayers = new LobbyPlayerInfo[4];
+            LobbyPlayers = new LobbyPlayerInfo[] { new(), new(), new(), new() };
             for (int i = 0; i < 4; i++)
                 PlayerReady[i] = false;
 
@@ -278,7 +276,7 @@ namespace SysBot.Pokemon
                 await Click(DUP, 1_000, token).ConfigureAwait(false);
                 await Click(A, 1_000, token).ConfigureAwait(false);
             }
-            else if ((Settings.RehostEmptyLobby || softLock || Settings.DaysToRoll == 0) && !unexpected) // Don't waste time; re-host.
+            else if ((Settings.RehostEmptyLobby || softLock || Settings.DaysToRoll is 0) && !unexpected) // Don't waste time; re-host.
             {
                 if (await AirplaneLobbyExit(token).ConfigureAwait(false))
                     return true;
@@ -342,8 +340,9 @@ namespace SysBot.Pokemon
                     {
                         await ConfirmPlayerReady(i, token).ConfigureAwait(false);
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        Log($"[GetRaidPartyReady]\nMessage: {ex.Message}\nStack: {ex.StackTrace}");
                         return false;
                     }
                 }
@@ -353,9 +352,9 @@ namespace SysBot.Pokemon
             }
             sw.Reset();
 
-            if (Settings.EchoPartyReady && Settings.RaidSasser)
+            if (Settings.RaidSasser)
             {
-                var notReady = LobbyPlayers.ToList().FindAll(x => x != default && !x.Ready && x.Name != string.Empty);
+                var notReady = LobbyPlayers.ToList().FindAll(x => !x.Ready && x.Name != string.Empty);
                 if (notReady.Count == 0)
                     return true;
 
@@ -374,49 +373,50 @@ namespace SysBot.Pokemon
             if (PlayerReady[player])
                 return;
 
-            ulong pkOfs = 0;
-            if (playerNameOfs == 0)
-                playerNameOfs = await ParsePointer("[[[[main+28F4060]+190]+60]+140]+98", token).ConfigureAwait(false) - 0xD0; // Thank you for sharing the pointer, Anubis! <3
+            ulong pkOfs = 0, playerNameOfs = 0;
             if (Settings.RaidSasser)
+            {
+                playerNameOfs = await ParsePointer("[[[[main+28F4060]+190]+60]+140]+98", token).ConfigureAwait(false) - 0xD0; // Thank you for sharing the pointer, Anubis! <3
                 pkOfs = await ParsePointer("[[[main+28ED790]+E8]+70]+DF8", token).ConfigureAwait(false);
+            }
 
             var ofs = RaidP0PokemonOffset + (0x30 * player);
             var data = await Connection.ReadBytesAsync(ofs, 4, token).ConfigureAwait(false);
             bool joined = data.Any(x => x > 0);
-            if (joined && LobbyPlayers[player] == default)
+
+            if (joined && Settings.RaidSasser && LobbyPlayers[player].Name == string.Empty)
             {
-                LobbyPlayers[player] = new();
-                var nameData = await SwitchConnection.ReadBytesAbsoluteAsync(playerNameOfs + (player * 0xD0), 24, token).ConfigureAwait(false);
-                if (nameData == null || nameData.Length == 0) // Offset failed, probably YComm or bad timings.
-                    return;
-
-                nameData = nameData.Reverse().SkipWhile((x, i) => x == 0 && nameData[nameData.Length - i - 2] == 0).Reverse().ToArray();
-                LobbyPlayers[player].Name = Encoding.Unicode.GetString(nameData).Replace("�", "");
-
-                PK8? pk = null;
-                if (Settings.EchoPartyReady && Settings.RaidSasser)
+                if (LobbyPlayers[player].Name == string.Empty)
                 {
-                    await Task.Delay(0_100, token).ConfigureAwait(false);
-                    var pkData = await SwitchConnection.ReadBytesAbsoluteAsync(pkOfs + (player * 0xD90), 0x158, token).ConfigureAwait(false);
-                    pk = (PK8?)EntityFormat.GetFromBytes(pkData);
-                    if (pk != null && pk.Species > 0 && pk.Species < 899)
+                    var nameData = await SwitchConnection.ReadBytesAbsoluteAsync(playerNameOfs + (player * 0xD0), 24, token).ConfigureAwait(false);
+                    if (nameData is not null && nameData.Length is not 0) // Offset failed, probably YComm or bad timings.
                     {
-                        var la = new LegalityAnalysis(pk);
-                        var shinySymbol = pk.IsShiny && (pk.ShinyXor == 0 || pk.FatefulEncounter) ? "■" : pk.IsShiny ? "★" : "";
-                        var form = TradeExtensions<PK8>.FormOutput(pk.Species, pk.Form, out _);
-                        var speciesForm = SpeciesName.GetSpeciesNameGeneration(pk.Species, 2, 8) + form;
-                        var genderStr = $"{(pk.Gender == 0 ? " (M)" : pk.Gender == 1 ? " (F)" : "")}";
-                        var nick = $"{(pk.IsNicknamed ? $" named {pk.Nickname}" : "")}";
-                        string laMsg = !la.Valid ? $"\nHere's what's wrong with it!\n```{la.Report()}```" : "";
-
-                        bool isAd = TradeExtensions<PK8>.HasAdName(pk, out string ad);
-                        string adMsg = isAd ? $" Ew, it has an ad-name ({ad})!" : "";
-                        EchoUtil.Echo($"{LobbyPlayers[player].Name} (Player {player + 1}) joined the lobby with{(!la.Valid ? " their madd hacc" : "")} {shinySymbol}{speciesForm}{genderStr}{nick}!{adMsg}{laMsg}");
+                        nameData = nameData.Reverse().SkipWhile((x, i) => x == 0 && nameData[nameData.Length - i - 2] == 0).Reverse().ToArray();
+                        LobbyPlayers[player].Name = Encoding.Unicode.GetString(nameData).Replace("�", "");
                     }
                 }
+            }
 
-                if (Settings.EchoPartyReady && (!Settings.RaidSasser || pk == null))
-                    EchoUtil.Echo($"{LobbyPlayers[player].Name} (Player {player + 1}) joined the lobby!");
+            if (joined && Settings.RaidSasser && LobbyPlayers[player].Name != string.Empty && LobbyPlayers[player].Poke is null)
+            {
+                var pkData = await SwitchConnection.ReadBytesAbsoluteAsync(pkOfs + (player * 0xD90), 0x158, token).ConfigureAwait(false);
+                LobbyPlayers[player].Poke = (PK8?)EntityFormat.GetFromBytes(pkData);
+
+                var pk = LobbyPlayers[player].Poke;
+                if (pk is not null && pk.Language != (int)LanguageID.Hacked)
+                {
+                    var la = new LegalityAnalysis(pk);
+                    var shinySymbol = pk.IsShiny && (pk.ShinyXor is 0 || pk.FatefulEncounter) ? "■" : pk.IsShiny ? "★" : "";
+                    var form = TradeExtensions<PK8>.FormOutput(pk.Species, pk.Form, out _);
+                    var speciesForm = SpeciesName.GetSpeciesNameGeneration(pk.Species, 2, 8) + form;
+                    var genderStr = $"{(pk.Gender == 0 ? " (M)" : pk.Gender == 1 ? " (F)" : "")}";
+                    var nick = $"{(pk.IsNicknamed ? $" named {pk.Nickname}" : "")}";
+                    string laMsg = !la.Valid ? $"\nHere's what's wrong with it!\n```{la.Report()}```" : "";
+
+                    bool isAd = TradeExtensions<PK8>.HasAdName(pk, out string ad);
+                    string adMsg = isAd ? $" Ew, it has an ad-name ({ad})!" : "";
+                    EchoUtil.Echo($"{LobbyPlayers[player].Name} (Player {player + 1}) joined the lobby with{(!la.Valid ? " their madd hacc" : "")} {shinySymbol}{speciesForm}{genderStr}{nick}!{adMsg}{laMsg}");
+                }
             }
 
             // Check if the player has locked in.
@@ -443,13 +443,13 @@ namespace SysBot.Pokemon
                 data = await Connection.ReadBytesAsync(ofs + RaidGenderIncr, 1, token).ConfigureAwait(false);
                 var gender = data[0] == 0 ? " (M)" : (data[0] == 1 ? " (F)" : "");
 
-                EchoUtil.Echo($"{LobbyPlayers[player].Name} (Player {player + 1}) is ready with {shiny}{(Species)dexno}{altformstr}{gender}!");
+                var isEmpty = LobbyPlayers[player].Name == string.Empty;
+                EchoUtil.Echo($"{(isEmpty ? "" : $"{LobbyPlayers[player].Name} ")}(Player {player + 1}) is ready with {shiny}{(Species)dexno}{altformstr}{gender}!");
             }
         }
 
         private async Task ResetGameAsync(CancellationToken token)
         {
-            playerNameOfs = 0;
             softLock = false;
             airplaneUsable = false;
             Log("Resetting raid by restarting the game");
@@ -670,7 +670,7 @@ namespace SysBot.Pokemon
 
         private async Task<bool> CheckIfDayRolled(CancellationToken token)
         {
-            if (!Settings.RolloverPrevention || encounterCount == 0)
+            if (!Settings.RolloverPrevention || encounterCount is 0)
                 return false;
 
             await Task.Delay(2_000, token).ConfigureAwait(false);
@@ -678,7 +678,6 @@ namespace SysBot.Pokemon
             RaidInfo.Den = new RaidSpawnDetail(denData, 0);
             if (!RaidInfo.Den.WattsHarvested)
             {
-                playerNameOfs = 0;
                 softLock = false;
                 Log("Watts appeared in den. Correcting for rollover...");
                 await Click(B, 0_250, token).ConfigureAwait(false);
@@ -773,7 +772,7 @@ namespace SysBot.Pokemon
 
             var form = isEvent ? RaidInfo.RaidDistributionEncounter.AltForm : RaidInfo.RaidEncounter.AltForm;
             var formStr = TradeExtensions<PK8>.FormOutput((int)species, (int)form, out _);
-            bool gmax = Settings.GmaxLock && (isEvent ? RaidInfo.RaidDistributionEncounter.IsGigantamax : RaidInfo.RaidEncounter.IsGigantamax);
+            bool gmax = isEvent ? RaidInfo.RaidDistributionEncounter.IsGigantamax : RaidInfo.RaidEncounter.IsGigantamax;
 
             var flawless = (uint)(isEvent ? RaidInfo.RaidDistributionEncounter.FlawlessIVs : RaidInfo.RaidEncounter.FlawlessIVs);
             bool flawlessLock = Settings.GuaranteedIVLock <= 0 || Settings.GuaranteedIVLock == flawless;
@@ -785,7 +784,8 @@ namespace SysBot.Pokemon
             bool formLock = Settings.FormLock == string.Empty || formStr.ToLower() == Settings.FormLock.ToLower();
             raidBossString = $"{speciesStr}{formStr}{(gmax ? "-Gmax" : "")}";
 
-            bool shared = gmax && formLock && flawlessLock;
+            bool gmaxLock = !Settings.GmaxLock || gmax;
+            bool shared = gmaxLock && formLock && flawlessLock;
             softLock = shared && species == Settings.SoftLockSpecies && Config.Connection.Protocol == SwitchProtocol.USB && Settings.AirplaneQuitout && Settings.HardLockSpecies == Species.None;
             hardLock = shared && species == Settings.HardLockSpecies && Settings.SoftLockSpecies == Species.None;
 
