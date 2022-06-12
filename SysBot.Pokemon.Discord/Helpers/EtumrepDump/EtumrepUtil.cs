@@ -96,7 +96,7 @@ namespace SysBot.Pokemon.Discord
             if (id is "etumrep_yes")
             {
                 var msg = "Attempting to communicate with the EtumrepMMO server, please wait...";
-                await UpdateEtumrepEmbed(component.Message, msg, Color.Green, default, MessageFlags.Loading).ConfigureAwait(false);
+                await UpdateEtumrepEmbed(component.Message, msg, Color.Green).ConfigureAwait(false);
                 LogUtil.LogInfo(msg, "[EtumrepMMO Handler]");
 
                 var user = await AuthenticateConnection(component).ConfigureAwait(false);
@@ -128,7 +128,7 @@ namespace SysBot.Pokemon.Discord
                 }
 
                 msg = "Successfully authenticated with the server, entering the queue...";
-                await UpdateEtumrepEmbed(component.Message, msg, Color.Green, default, MessageFlags.Loading).ConfigureAwait(false);
+                await UpdateEtumrepEmbed(component.Message, msg, Color.Green).ConfigureAwait(false);
                 LogUtil.LogInfo($"{user.BotName}: Successfully authenticated with the server, enqueueing {user.SeedCheckerName} ({user.SeedCheckerID})...", "[EtumrepMMO Handler]");
                 UserQueue.Enqueue(user);
 
@@ -256,7 +256,7 @@ namespace SysBot.Pokemon.Discord
                     }
 
                     var msg = $"Sending data to server, beginning seed calculation. Please wait...";
-                    await UpdateEtumrepEmbed(user.Component.Message, msg, Color.DarkGreen, default, MessageFlags.Loading).ConfigureAwait(false);
+                    await UpdateEtumrepEmbed(user.Component.Message, msg, Color.DarkGreen).ConfigureAwait(false);
                     LogUtil.LogInfo($"{user.BotName}: Sending data from {user.SeedCheckerName} to server for seed calculation.", "[EtumrepMMO Queue]");
 
                     try
@@ -303,8 +303,9 @@ namespace SysBot.Pokemon.Discord
                         var buttonNo = new ButtonBuilder() { CustomId = "permute_no", Label = "No", Style = ButtonStyle.Secondary };
                         components.WithButton(buttonNo);
 
-                        msg = $"Result received! Your seed is `{seed}`\nWould you now like to run PermuteMMO?";
-                        await UpdateEtumrepEmbed(user.Component.Message, msg, Color.Gold, components.Build()).ConfigureAwait(false);
+                        var seedMsg = $"Your seed is `{seed}`";
+                        msg = $"Result received! {seedMsg}\nWould you now like to run PermuteMMO?";
+                        await UpdateEtumrepEmbed(user.Component.Message, msg, Color.Gold, components.Build(), seedMsg).ConfigureAwait(false);
                     }
 
                     LogUtil.LogInfo($"{user.BotName}: Seed calculation for {user.SeedCheckerName} completed successfully.", "[EtumrepMMO Queue]");
@@ -313,7 +314,7 @@ namespace SysBot.Pokemon.Discord
             IsRunning = false;
         }
 
-        private static async Task UpdateEtumrepEmbed(SocketUserMessage message, string desc, Color color, MessageComponent? components = null, MessageFlags flag = MessageFlags.None)
+        private static async Task UpdateEtumrepEmbed(SocketUserMessage message, string desc, Color color, MessageComponent? components = null, string? seed = null)
         {
             var embed = new EmbedBuilder
             {
@@ -324,8 +325,8 @@ namespace SysBot.Pokemon.Discord
             await message.ModifyAsync(x =>
             {
                 x.Embed = embed.Build();
-                x.Flags = flag;
                 x.Components = components;
+                x.Content = seed;
             }).ConfigureAwait(false);
         }
 
