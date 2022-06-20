@@ -125,7 +125,7 @@ namespace SysBot.Pokemon.Discord
         public void SendEtumrepEmbed(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, IReadOnlyList<PA8> pkms)
         {
             OnFinish?.Invoke(routine);
-            _ = Task.Run(() => EtumrepUtil.SendEtumrepEmbedAsync(Trader, pkms).ConfigureAwait(false));
+            _ = Task.Run(async () => await EtumrepUtil.SendEtumrepEmbedAsync(Trader, pkms).ConfigureAwait(false));
         }
     }
 }

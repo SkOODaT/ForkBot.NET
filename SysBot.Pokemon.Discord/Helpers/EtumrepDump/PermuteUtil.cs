@@ -62,7 +62,16 @@ namespace SysBot.Pokemon.Discord
             var msg = $"{name} has submitted their JSON. Running PermuteMMO...";
             LogUtil.LogInfo(msg, "[PermuteMMO]");
 
-            var info = JsonConvert.DeserializeObject<UserEnteredSpawnInfo>(json);
+            UserEnteredSpawnInfo? info;
+            try
+            {
+                info = JsonConvert.DeserializeObject<UserEnteredSpawnInfo>(json);
+            }
+            catch
+            {
+                info = null;
+            }
+
             if (info is null)
             {
                 msg = "Provided JSON is invalid.";
@@ -93,7 +102,7 @@ namespace SysBot.Pokemon.Discord
             }.WithAuthor(x => { x.Name = "PermuteMMO Service"; });
 
             var res = string.Join("\n", meta.GetLines());
-            var bytes = Encoding.UTF8.GetBytes(res);
+            var bytes = Encoding.Unicode.GetBytes(res);
             var ms = new MemoryStream(bytes);
             await modal.FollowupWithFileAsync(ms, $"PermuteMMO_{seed}.txt", null, null, false, false, null, null, embed: embed.Build()).ConfigureAwait(false);
         }
