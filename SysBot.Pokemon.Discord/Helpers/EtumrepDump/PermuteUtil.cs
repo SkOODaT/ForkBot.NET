@@ -102,7 +102,7 @@ namespace SysBot.Pokemon.Discord
             }.WithAuthor(x => { x.Name = "PermuteMMO Service"; });
 
             var res = string.Join("\n", meta.GetLines());
-            var bytes = Encoding.Unicode.GetBytes(res);
+            var bytes = Encoding.UTF8.GetBytes(res);
             var ms = new MemoryStream(bytes);
             await modal.FollowupWithFileAsync(ms, $"PermuteMMO_{seed}.txt", null, null, false, false, null, null, embed: embed.Build()).ConfigureAwait(false);
         }
