@@ -76,7 +76,7 @@ namespace SysBot.Pokemon.Discord
                 var buttonNo = new ButtonBuilder() { CustomId = "etumrep_no", Label = "No", Style = ButtonStyle.Secondary };
                 var components = new ComponentBuilder().WithButton(buttonYes).WithButton(buttonNo);
 
-                embed.Description = "Here are all the Pokémon you dumped!\nWould you now like to run EtumrepMMO?";
+                embed.Description = "Here are all the Pokémon you dumped!\nWould you like to calculate your seed using EtumrepMMO?";
                 embed.WithAuthor(x => { x.Name = "EtumrepMMO Service"; });
 
                 await dmCh.SendFilesAsync(list, null, false, embed: embed.Build(), null, null, null, components: components.Build()).ConfigureAwait(false);
@@ -145,7 +145,7 @@ namespace SysBot.Pokemon.Discord
                 await UpdateEtumrepEmbed(component.Message, msg, Color.DarkBlue).ConfigureAwait(false);
 
                 var username = $"{component.User.Username}#{component.User.Discriminator} ({component.User.Id})";
-                LogUtil.LogInfo($"{username} did not wish to run EtumrepMMO.", "[EtumrepMMO Handler]");
+                LogUtil.LogInfo($"{username} did not wish to calculate their seed using EtumrepMMO.", "[EtumrepMMO Handler]");
             }
         }
 
@@ -313,7 +313,7 @@ namespace SysBot.Pokemon.Discord
                 components.WithButton(buttonNo);
 
                 var seedMsg = $"Your seed is `{seed}`";
-                msg = $"Result received! {seedMsg}\nWould you now like to run PermuteMMO?";
+                msg = $"Result received! {seedMsg}\nWould you like to calculate your shiny paths using PermuteMMO?";
                 await UpdateEtumrepEmbed(user.Component.Message, msg, Color.Gold, components.Build(), seedMsg).ConfigureAwait(false);
                 LogUtil.LogInfo($"{user.BotName}: Seed calculation for {user.SeedCheckerName} completed successfully.", "[EtumrepMMO Queue]");
             }
